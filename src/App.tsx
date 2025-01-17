@@ -1,35 +1,79 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-import './App.css'
+import "./App.css";
+import { useEffect, useRef } from "react";
+import { useVirtualizer } from "@tanstack/react-virtual";
+
+import { useAppDispatch, useAppSelector } from "./app/hooks";
+import { RootState } from "./app/store";
 
 function App() {
-  const [count, setCount] = useState(0)
+  const companies = useAppSelector((state: RootState) => state.companies);
+  // const dispatch = useAppDispatch();
+  const loaderRef = useRef(null);
+  const parentRef = useRef(null);
+
+  const rowVirtualizer = useVirtualizer({
+    count: companies.length,
+    getScrollElement: () => parentRef.current,
+    estimateSize: () => 35,
+  });
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(([entry]) => {
+      if (entry.isIntersecting) console.log("load more");
+    });
+
+    if (loaderRef.current) {
+      observer.observe(loaderRef.current);
+    }
+
+    return () => {
+      observer.disconnect();
+    };
+  }, []);
 
   return (
-    <>
-      <div>
-        <a href="https://vite.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
+    <div className="company">
+      <div className="company__header">
+        <span>Компании:</span>
+        <label>
+          <input type="checkbox" />
+          Выделить всё
+        </label>
       </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.tsx</code> and save to test HMR
-        </p>
+      <div ref={parentRef} className="company__table">
+        <div
+          style={{
+            height: rowVirtualizer.getTotalSize(),
+            width: "100%",
+            position: "relative",
+          }}
+        >
+          {rowVirtualizer.getVirtualItems().map((virtualRow) => {
+            const company = companies[virtualRow.index];
+
+            return (
+              <div
+                key={virtualRow.index}
+                className="company__table-row"
+                style={{
+                  position: "absolute",
+                  top: 0,
+                  left: 0,
+                  width: "100%",
+                  transform: `translateY(${virtualRow.start}px)`,
+                }}
+              >
+                <input type="checkbox" />
+                <span>{company.name}</span>
+                <span>{company.adress}</span>
+              </div>
+            );
+          })}
+        </div>
+        <span ref={loaderRef}>Loading more...</span>
       </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
-    </>
-  )
+    </div>
+  );
 }
 
-export default App
+export default App;
