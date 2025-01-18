@@ -1,13 +1,17 @@
-import "./App.css";
 import { useEffect, useRef } from "react";
 import { useVirtualizer } from "@tanstack/react-virtual";
+import "./App.css";
 
 import { useAppDispatch, useAppSelector } from "./app/hooks";
 import { RootState } from "./app/store";
+import { loadCompanies, subloadCompanies } from "./app/actions";
 
-function App() {
-  const companies = useAppSelector((state: RootState) => state.companies);
-  // const dispatch = useAppDispatch();
+const List = () => {
+  const { companies, isSubload, subloadErrorText } = useAppSelector(
+    (state: RootState) => state.companies
+  );
+  const dispatch = useAppDispatch();
+
   const loaderRef = useRef(null);
   const parentRef = useRef(null);
 
@@ -19,7 +23,9 @@ function App() {
 
   useEffect(() => {
     const observer = new IntersectionObserver(([entry]) => {
-      if (entry.isIntersecting) console.log("load more");
+      if (entry.isIntersecting) {
+        dispatch(subloadCompanies());
+      }
     });
 
     if (loaderRef.current) {
@@ -32,14 +38,7 @@ function App() {
   }, []);
 
   return (
-    <div className="company">
-      <div className="company__header">
-        <span>Компании:</span>
-        <label>
-          <input type="checkbox" />
-          Выделить всё
-        </label>
-      </div>
+    <>
       <div ref={parentRef} className="company__table">
         <div
           style={{
@@ -70,10 +69,48 @@ function App() {
             );
           })}
         </div>
-        <span ref={loaderRef}>Loading more...</span>
+        <div ref={loaderRef} style={{ height: 1 }}></div>
       </div>
+      {isSubload ? (
+        <span>Loading more...</span>
+      ) : (
+        subloadErrorText && <span>{subloadErrorText}</span>
+      )}
+    </>
+  );
+};
+
+const App = () => {
+  const { isLoading, loadErrorText } = useAppSelector(
+    (state: RootState) => state.companies
+  );
+  const dispatch = useAppDispatch();
+
+  useEffect(() => {
+    const promise = dispatch(loadCompanies());
+    return () => {
+      promise.abort();
+    };
+  }, []);
+
+  return (
+    <div className="company">
+      <div className="company__header">
+        <span>Компании:</span>
+        <label>
+          <input type="checkbox" />
+          Выделить всё
+        </label>
+      </div>
+      {loadErrorText ? (
+        <span>{loadErrorText}</span>
+      ) : isLoading ? (
+        <span>Loading...</span>
+      ) : (
+        <List />
+      )}
     </div>
   );
-}
+};
 
 export default App;

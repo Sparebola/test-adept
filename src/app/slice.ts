@@ -1,41 +1,66 @@
 import { createSlice } from "@reduxjs/toolkit";
 import type { PayloadAction } from "@reduxjs/toolkit";
 
-export interface CompaniesState {
+export interface Companies {
   name: string;
   adress: string;
 }
 
-const initialState: CompaniesState[] = Array.from(
-  { length: 25 },
-  (_value, index) => ({
-    name: `Компания ${index}`,
-    adress: "адрес",
-  })
-);
+export interface CompaniesState {
+  page: number;
+  isLoading: boolean;
+  isSubload: boolean;
+  loadErrorText: string;
+  subloadErrorText: string;
+  companies: Companies[];
+}
+
+const initialState: CompaniesState = {
+  page: 0,
+  isLoading: true,
+  isSubload: false,
+  loadErrorText: "",
+  subloadErrorText: "",
+  companies: [],
+};
 
 export const companiesSlice = createSlice({
   name: "companies",
   initialState,
   reducers: {
-    increment: (state) => {
-      // Redux Toolkit allows us to write "mutating" logic in reducers. It
-      // doesn't actually mutate the state because it uses the Immer library,
-      // which detects changes to a "draft state" and produces a brand new
-      // immutable state based off those changes
-      // state.value += 1;
+    setLoading: (state, action: PayloadAction<boolean>) => {
+      state.isLoading = action.payload;
     },
-    decrement: (state) => {
-      // state.value -= 1;
+
+    setSubload: (state, action: PayloadAction<boolean>) => {
+      state.isSubload = action.payload;
     },
-    incrementByAmount: (state, action: PayloadAction<number>) => {
-      // state.value += action.payload;
+
+    setLoadErrorText: (state, action: PayloadAction<string>) => {
+      state.loadErrorText = action.payload;
+    },
+
+    setSubloadErrorText: (state, action: PayloadAction<string>) => {
+      state.subloadErrorText = action.payload;
+    },
+
+    setPage: (state, action: PayloadAction<number>) => {
+      state.page = action.payload;
+    },
+
+    addCompanies: (state, action: PayloadAction<Companies[]>) => {
+      state.companies.push(...action.payload);
     },
   },
 });
 
-// Action creators are generated for each case reducer function
-export const { increment, decrement, incrementByAmount } =
-  companiesSlice.actions;
+export const {
+  setLoading,
+  setSubload,
+  setLoadErrorText,
+  setSubloadErrorText,
+  setPage,
+  addCompanies,
+} = companiesSlice.actions;
 
 export default companiesSlice.reducer;
