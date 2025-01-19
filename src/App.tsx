@@ -1,19 +1,80 @@
-import { useEffect, useRef } from "react";
+import { memo, useEffect, useRef } from "react";
 import { useVirtualizer } from "@tanstack/react-virtual";
 import "./App.css";
 
 import { useAppDispatch, useAppSelector } from "./app/hooks";
-import { RootState } from "./app/store";
-import { loadCompanies, subloadCompanies } from "./app/actions";
+import { loadCompanies, loadMoreCompanies } from "./app/actions";
+import {
+  Company,
+  setEditCompanyAdress,
+  setEditCompanyName,
+  setEditId,
+} from "./app/slice";
+
+interface ListRowProps {
+  company: Company;
+}
+
+const ListRow = memo(({ company }: ListRowProps) => {
+  const editId = useAppSelector((state) => state.companies.editId);
+  const dispatch = useAppDispatch();
+
+  return (
+    <>
+      <input type="checkbox" />
+      {editId === company.id ? (
+        <>
+          <input
+            defaultValue={company.name}
+            onChange={(event) => {
+              dispatch(setEditCompanyName(event.target.value));
+            }}
+          ></input>
+
+          <div>
+            <input
+              defaultValue={company.adress}
+              onChange={(event) => {
+                dispatch(setEditCompanyAdress(event.target.value));
+              }}
+            ></input>
+            <button onClick={() => dispatch(setEditId(-1))}>Ok</button>
+          </div>
+        </>
+      ) : (
+        <>
+          <span
+            onClick={() => {
+              dispatch(setEditId(company.id));
+            }}
+          >
+            {company.name}
+          </span>
+          <span
+            onClick={() => {
+              dispatch(setEditId(company.id));
+            }}
+          >
+            {company.adress}
+          </span>
+        </>
+      )}
+    </>
+  );
+});
 
 const List = () => {
-  const { companies, isSubload, subloadErrorText } = useAppSelector(
-    (state: RootState) => state.companies
+  const { companies, isSubload, loadMoreErrorText } = useAppSelector(
+    (state) => state.companies
   );
+
   const dispatch = useAppDispatch();
 
   const loaderRef = useRef(null);
   const parentRef = useRef(null);
+
+  // const [editId, setEditId] = useState(-1);
+  // const editCompanyRef = useRef<Omit<Company, "id">>();
 
   const rowVirtualizer = useVirtualizer({
     count: companies.length,
@@ -24,7 +85,7 @@ const List = () => {
   useEffect(() => {
     const observer = new IntersectionObserver(([entry]) => {
       if (entry.isIntersecting) {
-        dispatch(subloadCompanies());
+        dispatch(loadMoreCompanies());
       }
     });
 
@@ -62,9 +123,7 @@ const List = () => {
                   transform: `translateY(${virtualRow.start}px)`,
                 }}
               >
-                <input type="checkbox" />
-                <span>{company.name}</span>
-                <span>{company.adress}</span>
+                <ListRow company={company} />
               </div>
             );
           })}
@@ -74,7 +133,7 @@ const List = () => {
       {isSubload ? (
         <span>Loading more...</span>
       ) : (
-        subloadErrorText && <span>{subloadErrorText}</span>
+        loadMoreErrorText && <span>{loadMoreErrorText}</span>
       )}
     </>
   );
@@ -82,7 +141,7 @@ const List = () => {
 
 const App = () => {
   const { isLoading, loadErrorText } = useAppSelector(
-    (state: RootState) => state.companies
+    (state) => state.companies
   );
   const dispatch = useAppDispatch();
 

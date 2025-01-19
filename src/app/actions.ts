@@ -2,7 +2,7 @@ import { createAsyncThunk } from "@reduxjs/toolkit";
 import { AppDispatch, RootState } from "./store";
 import {
   addCompanies,
-  Companies,
+  Company,
   setLoadErrorText,
   setLoading,
   setPage,
@@ -13,10 +13,12 @@ import {
 const limit = 25;
 
 const fetchLoad = async (page: number) => {
-  const companies: Companies[] = [];
+  const companies: Company[] = [];
   for (let index = 1; index <= limit; index++) {
+    const id = page * limit + index;
     companies.push({
-      name: `Компания ${page * limit + index}`,
+      id,
+      name: `Компания ${id}`,
       adress: "адрес",
     });
   }
@@ -30,8 +32,8 @@ const createAppAsyncThunk = createAsyncThunk.withTypes<{
   dispatch: AppDispatch;
 }>();
 
-export const subloadCompanies = createAppAsyncThunk(
-  "companies/subloadCompanies",
+export const loadMoreCompanies = createAppAsyncThunk(
+  "companies/loadMoreCompanies",
   async (_, { dispatch, getState, signal }) => {
     const state = getState();
     const page = state.companies.page;

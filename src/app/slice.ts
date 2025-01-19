@@ -1,7 +1,8 @@
 import { createSlice } from "@reduxjs/toolkit";
 import type { PayloadAction } from "@reduxjs/toolkit";
 
-export interface Companies {
+export interface Company {
+  id: number;
   name: string;
   adress: string;
 }
@@ -11,8 +12,10 @@ export interface CompaniesState {
   isLoading: boolean;
   isSubload: boolean;
   loadErrorText: string;
-  subloadErrorText: string;
-  companies: Companies[];
+  loadMoreErrorText: string;
+  companies: Company[];
+  editId: number;
+  // selectedIds: Map<number, boolean>;
 }
 
 const initialState: CompaniesState = {
@@ -20,9 +23,14 @@ const initialState: CompaniesState = {
   isLoading: true,
   isSubload: false,
   loadErrorText: "",
-  subloadErrorText: "",
+  loadMoreErrorText: "",
   companies: [],
+  editId: -1,
+  // selectedIds: new Map<number, boolean>(),
 };
+
+const getCompanyIndexById = (id: number, companies: Company[]) =>
+  companies.findIndex((company) => company.id === id);
 
 export const companiesSlice = createSlice({
   name: "companies",
@@ -41,15 +49,29 @@ export const companiesSlice = createSlice({
     },
 
     setSubloadErrorText: (state, action: PayloadAction<string>) => {
-      state.subloadErrorText = action.payload;
+      state.loadMoreErrorText = action.payload;
     },
 
     setPage: (state, action: PayloadAction<number>) => {
       state.page = action.payload;
     },
 
-    addCompanies: (state, action: PayloadAction<Companies[]>) => {
+    addCompanies: (state, action: PayloadAction<Company[]>) => {
       state.companies.push(...action.payload);
+    },
+
+    setEditId: (state, action: PayloadAction<number>) => {
+      state.editId = action.payload;
+    },
+
+    setEditCompanyName: (state, action: PayloadAction<string>) => {
+      const index = getCompanyIndexById(state.editId, state.companies);
+      state.companies[index].name = action.payload;
+    },
+
+    setEditCompanyAdress: (state, action: PayloadAction<string>) => {
+      const index = getCompanyIndexById(state.editId, state.companies);
+      state.companies[index].adress = action.payload;
     },
   },
 });
@@ -61,6 +83,9 @@ export const {
   setSubloadErrorText,
   setPage,
   addCompanies,
+  setEditCompanyName,
+  setEditCompanyAdress,
+  setEditId,
 } = companiesSlice.actions;
 
 export default companiesSlice.reducer;
