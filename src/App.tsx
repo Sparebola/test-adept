@@ -1,11 +1,15 @@
-import { memo, useEffect, useRef } from "react";
+import { memo, useEffect, useRef, useState } from "react";
 import { useVirtualizer } from "@tanstack/react-virtual";
 import "./App.css";
 
 import { useAppDispatch, useAppSelector } from "./app/hooks";
 import { loadCompanies, loadMoreCompanies } from "./app/actions";
 import {
+  addCompany,
   Company,
+  deleteSelectCompany,
+  selectAllCompany,
+  setCompanyChecked,
   setEditCompanyAdress,
   setEditCompanyName,
   setEditId,
@@ -13,16 +17,28 @@ import {
 
 interface ListRowProps {
   company: Company;
+  isChecked: boolean;
+  isEdit: boolean;
 }
 
-const ListRow = memo(({ company }: ListRowProps) => {
-  const editId = useAppSelector((state) => state.companies.editId);
+const ListRow = memo(({ company, isChecked, isEdit }: ListRowProps) => {
   const dispatch = useAppDispatch();
 
   return (
     <>
-      <input type="checkbox" />
-      {editId === company.id ? (
+      <input
+        type="checkbox"
+        checked={isChecked}
+        onChange={(event) => {
+          dispatch(
+            setCompanyChecked({
+              isChecked: event.target.checked,
+              id: company.id,
+            })
+          );
+        }}
+      />
+      {isEdit ? (
         <>
           <input
             defaultValue={company.name}
@@ -66,17 +82,18 @@ const ListRow = memo(({ company }: ListRowProps) => {
 });
 
 const List = () => {
-  const { companies, isSubload, loadMoreErrorText } = useAppSelector(
-    (state) => state.companies
-  );
+  const companies = useAppSelector((state) => state.companies.companies);
+  const isSubload = useAppSelector((state) => state.companies.isSubload);
+  const selectedIds = useAppSelector((state) => state.companies.selectedIds);
+  const editId = useAppSelector((state) => state.companies.editId);
 
+  const loadMoreErrorText = useAppSelector(
+    (state) => state.companies.loadMoreErrorText
+  );
   const dispatch = useAppDispatch();
 
   const loaderRef = useRef(null);
   const parentRef = useRef(null);
-
-  // const [editId, setEditId] = useState(-1);
-  // const editCompanyRef = useRef<Omit<Company, "id">>();
 
   const rowVirtualizer = useVirtualizer({
     count: companies.length,
@@ -122,9 +139,14 @@ const List = () => {
                   top: 0,
                   left: 0,
                   transform: `translateY(${virtualRow.start}px)`,
+                  background: selectedIds[company.id] ? "gray" : undefined,
                 }}
               >
-                <ListRow company={company} />
+                <ListRow
+                  company={company}
+                  isChecked={Boolean(selectedIds[company.id])}
+                  isEdit={Boolean(editId === company.id)}
+                />
               </div>
             );
           })}
@@ -141,10 +163,12 @@ const List = () => {
 };
 
 const App = () => {
-  const { isLoading, loadErrorText } = useAppSelector(
-    (state) => state.companies
+  const isLoading = useAppSelector((state) => state.companies.isLoading);
+  const loadErrorText = useAppSelector(
+    (state) => state.companies.loadErrorText
   );
   const dispatch = useAppDispatch();
+  const [isSelectAll, selectAll] = useState(false);
 
   useEffect(() => {
     const promise = dispatch(loadCompanies());
@@ -155,13 +179,40 @@ const App = () => {
 
   return (
     <div className="company">
+      <div className="company__tools">
+        <button
+          onClick={() => {
+            selectAll(false);
+            dispatch(deleteSelectCompany());
+          }}
+        >
+          Delete slect
+        </button>
+        <button
+          onClick={() => {
+            dispatch(addCompany());
+          }}
+        >
+          Add
+        </button>
+      </div>
+
       <div className="company__header">
         <span>Компании:</span>
+
         <label>
-          <input type="checkbox" />
+          <input
+            type="checkbox"
+            checked={isSelectAll}
+            onChange={(event) => {
+              selectAll(event.target.checked);
+              dispatch(selectAllCompany(event.target.checked));
+            }}
+          />
           Выделить всё
         </label>
       </div>
+
       {loadErrorText ? (
         <span>{loadErrorText}</span>
       ) : isLoading ? (

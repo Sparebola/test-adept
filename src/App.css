@@ -8,7 +8,7 @@
   }
 
   .company__table {
-    height: 90vh;
+    height: 70vh;
     overflow-y: auto;
   }
 
@@ -21,8 +21,14 @@
   }
 
   .company__name {
+    cursor: pointer;
     text-overflow: ellipsis;
     white-space: nowrap;
     overflow: hidden;
+  }
+
+  .company__tools {
+    display: flex;
+    gap: 10px;
   }
 }
