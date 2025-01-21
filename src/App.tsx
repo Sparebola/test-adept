@@ -44,6 +44,7 @@ const ListRow = memo(({ company }: ListRowProps) => {
       ) : (
         <>
           <span
+            className="company__name"
             onClick={() => {
               dispatch(setEditId(company.id));
             }}
@@ -51,6 +52,7 @@ const ListRow = memo(({ company }: ListRowProps) => {
             {company.name}
           </span>
           <span
+            className="company__name"
             onClick={() => {
               dispatch(setEditId(company.id));
             }}
@@ -119,7 +121,6 @@ const List = () => {
                   position: "absolute",
                   top: 0,
                   left: 0,
-                  width: "100%",
                   transform: `translateY(${virtualRow.start}px)`,
                 }}
               >
